@@ -92,11 +92,54 @@ func routeRequest(req *HTTPRequest) *HTTPResponse {
 	switch req.Path {
 	case "/":
 		return handleHome(req)
-	case "users":
+	case "/users":
 		return handleUsers(req)
+	case "/health":
+		return handleHealth(req)
 	default:
+		if strings.HasPrefix(req.Path, "/users/") {
+			return handleUserById(req)
+		}
 		return createErrResponse(404, "Not Found")
 	}
+}
+
+func handleHealth(req *HTTPRequest) *HTTPResponse {
+	switch req.Method {
+	case "GET":
+		health := map[string]any{
+			"status":    "healthy",
+			"timestamp": time.Now().Format(time.RFC3339),
+			"uptime":    "unknown",
+		}
+
+		jsonBody, _ := json.Marshal(health)
+		return createResponse(200, "OK", "application/json", string(jsonBody))
+
+	default:
+		return createErrResponse(405, "Method Not Allowed")
+	}
+}
+
+func handleUserById(req *HTTPRequest) *HTTPResponse {
+	userID := strings.TrimPrefix(req.Path, "/users/")
+
+	switch req.Method {
+
+	case "GET":
+		user := map[string]any{
+			"id":    userID,
+			"name":  "Name " + userID,
+			"email": "email" + userID + "@gmail.com",
+		}
+
+		jsonBody, _ := json.Marshal(user)
+		return createResponse(200, "OK", "application/json", string(jsonBody))
+
+	default:
+		return createErrResponse(405, "Method Not Allowed")
+	}
+
 }
 
 func handleUsers(req *HTTPRequest) *HTTPResponse {
