@@ -92,8 +92,40 @@ func routeRequest(req *HTTPRequest) *HTTPResponse {
 	switch req.Path {
 	case "/":
 		return handleHome(req)
+	case "users":
+		return handleUsers(req)
 	default:
 		return createErrResponse(404, "Not Found")
+	}
+}
+
+func handleUsers(req *HTTPRequest) *HTTPResponse {
+	switch req.Method {
+
+	case "GET":
+		users := []map[string]any{
+			{"id": 1, "name": "John", "email": "john@example.com"},
+			{"id": 2, "name": "Jane", "email": "jane@example.com"},
+		}
+
+		jsonBody, _ := json.Marshal(users)
+		return createResponse(200, "OK", "application/json", string(jsonBody))
+
+	case "POST":
+		if req.Body == "" {
+			return createErrResponse(400, "Bad Request")
+		}
+
+		data := map[string]any{
+			"message": "user Created",
+			"data":    req.Body,
+		}
+
+		jsonBody, _ := json.Marshal(data)
+		return createResponse(201, "Created", "application/json", string(jsonBody))
+
+	default:
+		return createErrResponse(405, "Method Not Allowed")
 	}
 }
 
@@ -133,21 +165,6 @@ func createErrResponse(statusCode int, statusText string) *HTTPResponse {
 	return createResponse(statusCode, statusText, "application/json", string(jsonBody))
 }
 
-func getErrorMessage(statusCode int) string {
-	switch statusCode {
-	case 400:
-		return "The request was invalid"
-	case 404:
-		return "The requested resource was not found"
-	case 405:
-		return "The HTTP method is not allowed for this resource"
-	case 500:
-		return "Internal server error"
-	default:
-		return "An error occurred"
-	}
-}
-
 func sendResponse(conn net.Conn, response *HTTPResponse) error {
 	var responseStr strings.Builder
 
@@ -162,6 +179,21 @@ func sendResponse(conn net.Conn, response *HTTPResponse) error {
 
 	_, err := conn.Write([]byte(responseStr.String()))
 	return err
+}
+
+func getErrorMessage(statusCode int) string {
+	switch statusCode {
+	case 400:
+		return "The request was invalid"
+	case 404:
+		return "The requested resource was not found"
+	case 405:
+		return "The HTTP method is not allowed for this resource"
+	case 500:
+		return "Internal server error"
+	default:
+		return "An error occurred"
+	}
 }
 
 func parseHTTPRequest(rawRequest string) (*HTTPRequest, error) {
