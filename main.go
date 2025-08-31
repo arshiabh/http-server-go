@@ -3,49 +3,33 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type HTTPRequest struct {
-	Method  string
-	Path    string
-	Version string
-	Raw     string
-	Headers map[string]string
-	Body    string
-}
-
-type HTTPResponse struct {
-	StatusCode int
-	StatusText string
-	Body       string
-	Headers    map[string]string
-}
-
 func main() {
 	l, err := net.Listen("tcp", "localhost:8000")
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
+		return
 	}
 
 	defer func() {
 		if err := l.Close(); err != nil {
-			log.Fatal(err)
+			logger.Error(err.Error())
 		}
 	}()
 
-	fmt.Println("TCP server listening on port 8000")
+	logger.Info("TCP server listening on port 8000")
 
 	// keep loop and send them to go routine
 	for {
 
 		conn, err := l.Accept()
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 			continue
 		}
 
@@ -222,6 +206,12 @@ func sendResponse(conn net.Conn, response *HTTPResponse) error {
 
 	_, err := conn.Write([]byte(responseStr.String()))
 	return err
+}
+
+func createMethodNotAllowedResponse(allowed []string) *HTTPResponse {
+	response := createErrResponse(405, "Method Not Allowed")
+	response.Headers["Allow"] = strings.Join(allowed, ", ")
+	return response
 }
 
 func getErrorMessage(statusCode int) string {
