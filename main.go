@@ -4,10 +4,12 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/arshiabh/http-server-go/cmd/http"
 )
 
 func main() {
-	config := DefaultConfig()
+	config := http.DefaultConfig()
 
 	// Override with environment variables if available
 	if port := os.Getenv("HTTP_PORT"); port != "" {
@@ -23,7 +25,7 @@ func main() {
 	}
 
 	// Create and start server
-	server := NewHTTPServer(config)
+	server := http.NewHTTPServer(config)
 
 	// Start server (this blocks)
 	if err := server.Start(); err != nil {
