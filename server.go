@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
+	"time"
 )
 
 type HTTPServer struct {
@@ -43,7 +45,19 @@ func (s *HTTPServer) Start() error {
 
 	s.setupRoutes()
 
-	return nil
+	// Accept connections in a loop
+	for {
+		// Accept a connection
+		conn, err := listener.Accept()
+		if err != nil {
+			s.logger.Error("Error accepting connection: %v", err)
+			continue
+		}
+
+		// Handle the connection in a separate goroutine
+		go s.handleConnection(conn)
+	}
+
 }
 
 func (s *HTTPServer) setupRoutes() {
@@ -61,4 +75,73 @@ func (s *HTTPServer) setupRoutes() {
 
 	s.logger.Info("Routes registered successfully")
 
+}
+
+func (s *HTTPServer) handleConnection(conn net.Conn) {
+	// Ensure connection is always closed
+	defer func() {
+		if err := conn.Close(); err != nil {
+			s.logger.Error("Error closing connection: %v", err)
+		}
+	}()
+
+	// Panic recovery
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("Panic in connection handler: %v", r)
+			response := s.createErrorResponse(500, "Internal Server Error")
+			if sendErr := s.sendResponse(conn, response); sendErr != nil {
+				s.logger.Error("Failed to send error response after panic: %v", sendErr)
+			}
+		}
+	}()
+
+	// Get client address
+	clientAddr := conn.RemoteAddr().String()
+	s.logger.Info("New connection from: %s", clientAddr)
+
+	// Set read timeout
+	conn.SetReadDeadline(time.Now().Add(s.config.ReadTimeout))
+
+	// Read data from the connection
+	buffer := make([]byte, 8192)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			s.logger.Error("Read timeout from %s", clientAddr)
+			response := s.createErrorResponse(408, "Request Timeout")
+			s.sendResponse(conn, response)
+		} else {
+			s.logger.Error("Error reading from %s: %v", clientAddr, err)
+		}
+		return
+	}
+
+	// Parse the HTTP request
+	rawRequest := string(buffer[:n])
+	s.logger.Debug("Raw request from %s: %s", clientAddr, strings.ReplaceAll(rawRequest, "\r\n", "\\r\\n"))
+
+	request, err := parseHTTPRequest(rawRequest)
+	if err != nil {
+		s.logger.Error("Error parsing request from %s: %v", clientAddr, err)
+		response := s.createErrorResponse(400, "Bad Request")
+		if sendErr := s.sendResponse(conn, response); sendErr != nil {
+			s.logger.Error("Failed to send bad request response: %v", sendErr)
+		}
+		return
+	}
+
+	// Log the parsed request
+	s.logger.Info("Request: %s %s from %s", request.Method, request.Path, clientAddr)
+
+	// Route the request and create response
+	response := s.router.Route(request)
+
+	// Send the response
+	if err := s.sendResponse(conn, response); err != nil {
+		s.logger.Error("Failed to send response to %s: %v", clientAddr, err)
+		return
+	}
+
+	s.logger.Info("Response: %d %s to %s", response.StatusCode, response.StatusText, clientAddr)
 }
