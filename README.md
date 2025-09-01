@@ -49,7 +49,7 @@ The server is organized into several key components:
 1. Clone the repository:
 ```bash
 git clone https://github.com/arshiabh/http-server-go.git
-cd custom-http-server
+cd http-server-go
 ```
 
 2. Run the server:
