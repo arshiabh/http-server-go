@@ -7,13 +7,13 @@ import (
 
 type Logger struct {
 	*log.Logger
+	level string
 }
 
-var logger *Logger
-
-func init() {
-	logger = &Logger{
+func NewLogger(level string) *Logger {
+	return &Logger{
 		Logger: log.New(os.Stdout, "[http-server]", log.LstdFlags|log.Lshortfile),
+		level:  level,
 	}
 }
 
