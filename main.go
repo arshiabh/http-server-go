@@ -214,21 +214,6 @@ func createMethodNotAllowedResponse(allowed []string) *HTTPResponse {
 	return response
 }
 
-func getErrorMessage(statusCode int) string {
-	switch statusCode {
-	case 400:
-		return "The request was invalid"
-	case 404:
-		return "The requested resource was not found"
-	case 405:
-		return "The HTTP method is not allowed for this resource"
-	case 500:
-		return "Internal server error"
-	default:
-		return "An error occurred"
-	}
-}
-
 func parseHTTPRequest(rawRequest string) (*HTTPRequest, error) {
 	lines := strings.Split(rawRequest, "\r\n")
 	if len(lines) == 0 {
