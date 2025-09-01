@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -104,65 +103,7 @@ func (s *HTTPServer) handleError(request *HTTPRequest) *HTTPResponse {
 	return s.createErrorResponse(500, "Internal Server Error")
 }
 
-
-// helper 
-func (s *HTTPServer) createResponse(statusCode int, statusText, contentType, body string) *HTTPResponse {
-	headers := map[string]string{
-		"Content-Type":   contentType,
-		"Content-Length": strconv.Itoa(len(body)),
-		"Date":           time.Now().Format(time.RFC1123),
-		"Server":         "CustomHTTPServer/1.0",
-		"Connection":     "close",
-	}
-
-	return &HTTPResponse{
-		StatusCode: statusCode,
-		StatusText: statusText,
-		Headers:    headers,
-		Body:       body,
-	}
-}
-
-func (s *HTTPServer) createJSONResponse(statusCode int, statusText string, data interface{}) *HTTPResponse {
-	jsonBody, err := json.Marshal(data)
-	if err != nil {
-		s.logger.Error("Failed to marshal JSON response: %v", err)
-		return s.createErrorResponse(500, "Internal Server Error")
-	}
-	return s.createResponse(statusCode, statusText, "application/json", string(jsonBody))
-}
-
-func (s *HTTPServer) createErrorResponse(statusCode int, statusText string) *HTTPResponse {
-	errorBody := map[string]interface{}{
-		"error":     statusText,
-		"code":      statusCode,
-		"message":   getErrorMessage(statusCode),
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-	return s.createJSONResponse(statusCode, statusText, errorBody)
-}
-
-func createErrorResponse(statusCode int, statusText string) *HTTPResponse {
-	errorBody := map[string]interface{}{
-		"error":     statusText,
-		"code":      statusCode,
-		"message":   getErrorMessage(statusCode),
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-	jsonBody, _ := json.Marshal(errorBody)
-	headers := map[string]string{
-		"Content-Type":   "application/json",
-		"Content-Length": strconv.Itoa(len(jsonBody)),
-		"Date":           time.Now().Format(time.RFC1123),
-		"Server":         "CustomHTTPServer/1.0",
-	}
-	return &HTTPResponse{
-		StatusCode: statusCode,
-		StatusText: statusText,
-		Headers:    headers,
-		Body:       string(jsonBody),
-	}
-}
+// helper
 
 func getErrorMessage(statusCode int) string {
 	switch statusCode {

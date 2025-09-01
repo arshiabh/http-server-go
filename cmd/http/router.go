@@ -22,6 +22,23 @@ func NewRouter(logger *Logger) *Router {
 	}
 }
 
+func (s *HTTPServer) setupRoutes() {
+	s.logger.Info("Setting up routes...")
+
+	// Register route handlers
+	s.router.HandleFunc("GET", "/", s.handleHome)
+	s.router.HandleFunc("GET", "/users", s.handleGetUsers)
+	s.router.HandleFunc("POST", "/users", s.handleCreateUser)
+	s.router.HandleFunc("GET", "/users/{id}", s.handleGetUser)
+	s.router.HandleFunc("PUT", "/users/{id}", s.handleUpdateUser)
+	s.router.HandleFunc("DELETE", "/users/{id}", s.handleDeleteUser)
+	s.router.HandleFunc("GET", "/health", s.handleHealth)
+	s.router.HandleFunc("GET", "/error", s.handleError)
+
+	s.logger.Info("Routes registered successfully")
+
+}
+
 func (r *Router) HandleFunc(method, path string, handler RouteHandler) {
 	route := Route{
 		Method:  method,

@@ -5,17 +5,19 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/arshiabh/http-server-go/config"
 )
 
 type HTTPServer struct {
 	router *Router
 	logger *Logger
-	config *Config
+	config *config.Config
 }
 
 var logger *Logger
 
-func NewHTTPServer(config *Config) *HTTPServer {
+func NewHTTPServer(config *config.Config) *HTTPServer {
 	logger = NewLogger(config.LogLevel)
 	router := NewRouter(logger)
 
@@ -57,23 +59,6 @@ func (s *HTTPServer) Start() error {
 		// Handle the connection in a separate goroutine
 		go s.handleConnection(conn)
 	}
-
-}
-
-func (s *HTTPServer) setupRoutes() {
-	s.logger.Info("Setting up routes...")
-
-	// Register route handlers
-	s.router.HandleFunc("GET", "/", s.handleHome)
-	s.router.HandleFunc("GET", "/users", s.handleGetUsers)
-	s.router.HandleFunc("POST", "/users", s.handleCreateUser)
-	s.router.HandleFunc("GET", "/users/{id}", s.handleGetUser)
-	s.router.HandleFunc("PUT", "/users/{id}", s.handleUpdateUser)
-	s.router.HandleFunc("DELETE", "/users/{id}", s.handleDeleteUser)
-	s.router.HandleFunc("GET", "/health", s.handleHealth)
-	s.router.HandleFunc("GET", "/error", s.handleError)
-
-	s.logger.Info("Routes registered successfully")
 
 }
 

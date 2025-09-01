@@ -6,10 +6,11 @@ import (
 	"strconv"
 
 	"github.com/arshiabh/http-server-go/cmd/http"
+	"github.com/arshiabh/http-server-go/config"
 )
 
 func main() {
-	config := http.DefaultConfig()
+	config := config.DefaultConfig()
 
 	// Override with environment variables if available
 	if port := os.Getenv("HTTP_PORT"); port != "" {
