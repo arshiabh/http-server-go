@@ -73,7 +73,7 @@ LOG_LEVEL=DEBUG go run main.go
 
 Available configuration options:
 - `HTTP_HOST` - Host to bind to (default: localhost)
-- `HTTP_PORT` - Port to listen on (default: 8080)
+- `HTTP_PORT` - Port to listen on (default: 8000)
 - `LOG_LEVEL` - Logging level: INFO, DEBUG, ERROR (default: INFO)
 
 ## 📖 Usage Examples
